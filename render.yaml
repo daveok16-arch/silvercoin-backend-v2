@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: silvercoin-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 backend.py
+    envVars:
+      - key: PORT
+        value: "$PORT"
+      - key: TWELVEDATA_API_KEY
+        value: "c13f966de04f4939b4325bb55cf7ffc0"
+      - key: TELEGRAM_TOKEN
+        value: "8237319754:AAFAi-E0IAHuClg7l_PNfWwkMUH4QEiF7W0"
+      - key: TELEGRAM_CHAT_ID
+        value: "7779937295"
