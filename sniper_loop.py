@@ -7,7 +7,6 @@ from datetime import datetime, timezone, timedelta
 # ============================
 # Configuration
 # ============================
-=======
 import asyncio
 import logging
 import requests
@@ -31,21 +30,19 @@ TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 PAIRS = ["EUR/USD", "AUD/USD"]
 
-<<<<<<< HEAD
 # Nigeria timezone
 NIGERIA_TZ = timezone(timedelta(hours=1))
 
 def send_telegram(message: str):
-=======
 PAIRS = ["EUR/USD", "AUD/USD"]
 
 def send_telegram(msg):
->>>>>>> 4edb7c7 (Update backend and sniper_loop with latest changes)
+     4edb7c7 (Update backend and sniper_loop with latest changes)
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         logger.warning("Telegram not configured.")
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-<<<<<<< HEAD
+        HEAD
     payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
     try:
         response = requests.post(url, json=payload, timeout=5)
@@ -80,7 +77,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-=======
     try:
         res = requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": msg})
         if res.status_code != 200:
@@ -112,4 +108,4 @@ async def sniper_loop():
 
 if __name__ == "__main__":
     asyncio.run(sniper_loop())
->>>>>>> 4edb7c7 (Update backend and sniper_loop with latest changes)
+    4edb7c7 (Update backend and sniper_loop with latest changes)
