@@ -1,62 +1,56 @@
+# sniper_loop.py
 import os
-import asyncio
-import aiohttp
+import time
+import requests
 from datetime import datetime, timezone, timedelta
 
 # ============================
-# Timezone: Nigeria UTC+1
+# Configuration
 # ============================
-NIGERIA_TZ = timezone(timedelta(hours=1))
-
-# ============================
-# Environment variables
-# ============================
-BACKEND_URL = os.environ.get("BACKEND_URL", f"http://127.0.0.1:{os.environ.get('PORT', 8080)}")
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8080")
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+PAIRS = ["EUR/USD", "AUD/USD"]
 
-# ============================
-# Telegram sender
-# ============================
-async def send_telegram_message(message):
+# Nigeria timezone
+NIGERIA_TZ = timezone(timedelta(hours=1))
+
+def send_telegram(message: str):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         print("Telegram not configured.")
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    async with aiohttp.ClientSession() as session:
-        await session.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": message})
-
-# ============================
-# Fetch signal from backend
-# ============================
-async def fetch_signal(session, pair):
+    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
     try:
-        async with session.get(f"{BACKEND_URL}/signal?pair={pair}") as resp:
-            if resp.status == 200:
-                data = await resp.json()
-                return data
-            else:
-                print(f"Failed fetching {pair}: {resp.status}")
-                return None
+        response = requests.post(url, json=payload, timeout=5)
+        if response.status_code != 200:
+            print(f"Failed to send Telegram message: {response.text}")
+    except Exception as e:
+        print(f"Error sending Telegram message: {e}")
+
+def fetch_signal(pair: str):
+    try:
+        response = requests.get(f"{BACKEND_URL}/signal", params={"pair": pair}, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error fetching {pair}: {response.status_code} {response.text}")
     except Exception as e:
         print(f"Error fetching {pair}: {e}")
-        return None
+    return None
 
-# ============================
-# Main SNIPER loop
-# ============================
-async def main():
-    pairs = ["EUR/USD", "AUD/USD"]
+def main():
     print(f"Starting SNIPER loop (Nigeria Time UTC+1)...")
-    async with aiohttp.ClientSession() as session:
-        while True:
-            for pair in pairs:
-                signal = await fetch_signal(session, pair)
-                if signal:
-                    msg = f"Sent signal: {signal['pair']} – {signal['signal']}"
-                    print(msg)
-                    await send_telegram_message(msg)
-            await asyncio.sleep(60)  # Repeat every 60 seconds
+    while True:
+        for pair in PAIRS:
+            signal = fetch_signal(pair)
+            if signal:
+                dt = signal.get("datetime")
+                s = signal.get("signal")
+                message = f"Sent signal: {pair} – {s} at {dt}"
+                print(message)
+                send_telegram(message)
+        time.sleep(60)  # check every minute
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
